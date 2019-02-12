@@ -56,7 +56,8 @@
 #define MOMENTARY
 #define CACHE_ACL
 
-#define API_HOST    "192.168.1.3"
+//#define API_HOST    "192.168.1.3"
+#define API_HOST    "10.1.10.145"
 #define API_PORT    "8080"
 #define UNLOCK_TIME 5000
 #define MAX_TRIES   3
