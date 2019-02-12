@@ -53,12 +53,9 @@
 
 // Constants that aren't configurable in menuconfig (yet)
 //
-//#define MOMENTARY
+#define MOMENTARY
 #define CACHE_ACL
 
-#define WEB_SERVER  "example.com"
-#define WEB_PORT    80
-#define WEB_URL     "http://example.com/"
 #define API_HOST    "192.168.1.3"
 #define API_PORT    "8080"
 #define UNLOCK_TIME 5000
@@ -629,7 +626,6 @@ int query_rfid (unsigned long rfid, int update_cache) {
 static void rfid_main_loop (void *pvParameters)
 {
     int result;
-    int cardno_valid;
     unsigned long cardno;
 
 #ifdef CACHE_ACL
@@ -637,6 +633,7 @@ static void rfid_main_loop (void *pvParameters)
 #endif
 
 #ifndef MOMENTARY
+    int cardno_valid;
     int last_cardno_valid = false;
     unsigned long last_cardno = 0;
     int acl_ok = false;
