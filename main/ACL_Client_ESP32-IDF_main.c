@@ -56,7 +56,6 @@
 #define MOMENTARY
 #define CACHE_ACL
 
-//#define API_HOST    "192.168.1.3"
 #define API_HOST    "10.1.10.145"
 #define API_PORT    "8080"
 #define UNLOCK_TIME 5000
@@ -128,7 +127,6 @@ void no_rfid_sequence () {
   // turn relay off
   gpio_set_level (GPIO_OUTPUT_RELAY_POWER, 0);
   gpio_set_level (GPIO_OUTPUT_ACCESS_LED, 0);
-  ESP_LOGI (TAG, "Turning off relay power");
 }
 
 
@@ -370,6 +368,8 @@ int open_server (int *s, char *path)  {
 
     if (err != 0 || res == NULL) {
         ESP_LOGE(TAG, "DNS lookup failed err=%d res=%p", err, res);
+        if (res != NULL)
+            freeaddrinfo(res);
         return (-1);
     }
 
@@ -532,6 +532,7 @@ int read_acl () {
         ESP_LOGI(TAG, "New ACL successfully cached %d entries", cnt);
         free_acls(old_acl_cache);
         acl_loaded = true;
+        ESP_LOGI(TAG, "Heap size = %d", xPortGetFreeHeapSize());
         return (true);
     } else if ((err == 0) && (cnt == 0)) {
         ESP_LOGE(TAG, "http read returned no valid ACLs");
@@ -548,6 +549,7 @@ int read_acl () {
         acl_loaded = old_acl_loaded;
         blinkit_low(GPIO_OUTPUT_CONNECTED_LED, 7, 250);
     }
+    ESP_LOGI(TAG, "Heap size = %d", xPortGetFreeHeapSize());
     return (false);
 }
 
@@ -629,10 +631,6 @@ static void rfid_main_loop (void *pvParameters)
     int result;
     unsigned long cardno;
 
-#ifdef CACHE_ACL
-    int used_cache;
-#endif
-
 #ifndef MOMENTARY
     int cardno_valid;
     int last_cardno_valid = false;
@@ -662,9 +660,7 @@ static void rfid_main_loop (void *pvParameters)
         //
         if (get_RFID(&cardno))  {
             ESP_LOGI(TAG, "cardno = %lu", cardno);
-
-            used_cache = false;
-      
+            int used_cache = false;
 #ifdef CACHE_ACL
             if (acl_loaded && ((result = query_rfid_cache (cardno)) >= 0)) {
                 used_cache = true;
@@ -679,6 +675,7 @@ static void rfid_main_loop (void *pvParameters)
             if (result == 1) {
                 good_rfid_sequence();
                 vTaskDelay(UNLOCK_TIME / portTICK_RATE_MS);
+                ESP_LOGI (TAG, "Turning off relay power");
                 no_rfid_sequence();
 
                 // eat any card reads that happened when door was unlocked
@@ -688,6 +685,7 @@ static void rfid_main_loop (void *pvParameters)
                 bad_rfid_sequence();
             } else {
                 // problem with the server
+                ESP_LOGI (TAG, "Server error. Turning off relay power");
                 no_rfid_sequence();
             }
 
@@ -695,10 +693,6 @@ static void rfid_main_loop (void *pvParameters)
             if (used_cache) {
                 query_rfid (cardno, true);
             }
-      
-        } else {
-            // link down or corrupted card
-            no_rfid_sequence();
         }
 
 #else // NOT MOMENTARY
@@ -731,8 +725,8 @@ static void rfid_main_loop (void *pvParameters)
         } else if (cardno_valid) {
             // Different card, time to query the server
             //
+            int used_cache = false;
 #ifdef CACHE_ACL
-            used_cache = false;
             if (acl_loaded && ((result = query_rfid_cache (cardno)) >= 0)) {
                 used_cache = true;
             } else {
@@ -755,6 +749,7 @@ static void rfid_main_loop (void *pvParameters)
                 attempts = 0;
                 acl_ok = false;
             } else {
+                ESP_LOGI (TAG, "Turning off relay power");
                 no_rfid_sequence();
                 last_cardno_valid = false;
                 acl_ok = false;
@@ -772,6 +767,7 @@ static void rfid_main_loop (void *pvParameters)
             // so log will show how long the machine was in use
             //
             if (acl_ok) {
+                ESP_LOGI (TAG, "Turning off relay power and logging");
                 no_rfid_sequence();
                 query_rfid(0, false);
             }
@@ -791,13 +787,12 @@ static void rfid_main_loop (void *pvParameters)
            vTaskDelay(READER_TIME / portTICK_RATE_MS);
            gpio_set_level (GPIO_OUTPUT_READER_POWER, 1);
            vTaskDelay(READER_TIME / portTICK_RATE_MS);
-       } else {
-           // otherwise, chill for 100 mSec
-           //
-           vTaskDelay(100 / portTICK_RATE_MS);
        }
 #endif //MOMENTARY
 
+       // chill for 100 mSec
+       //
+       vTaskDelay(100 / portTICK_RATE_MS);
     }
 }
 
