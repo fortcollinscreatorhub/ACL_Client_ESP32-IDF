@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := ACL_Client_ESP32-IDF
+PROJECT_NAME := ACL_Client_ESP32Rev1
 
 include $(IDF_PATH)/make/project.mk
 
