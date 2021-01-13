@@ -489,6 +489,7 @@ void initialize_pins (void) {
     //configure GPIO with the given settings
     gpio_config(&io_conf);
 
+    gpio_set_level(GPIO_OUTPUT_READER_POWER, 1);
     gpio_set_level(GPIO_OUTPUT_RELAY_POWER, 0);
     gpio_set_level(GPIO_OUTPUT_CONNECTED_LED, 0);
     gpio_set_level(GPIO_OUTPUT_ACCESS_LED, 0);
