@@ -5,3 +5,7 @@ This is a stand-alone ESP-IDF program for an ESP32 based board. The purpose is t
 * "Access" LED - indicates thati an RFID with the correct acccess rights for the equipment has been detected. It flashes when an RFID without correct permission has been detected.
 * Relay output - connected to a transistor that controls a relay connected to the equipment - typically a low voltage signal.
 * Reader output - connected to a transistor that controls the power to the RFID reader. This is needed for equipment that needs a "level triggered" control (as opposed to a door controller where "edge triggered" suffices). Most readers will not reliably keep sending data when an RFID is left in front of the reader. To get around this, when a valid RFID is detected (not necessarily with the correct permissions), the reader is powered down and then brought back up to force it to re-detect the card.
+
+# Development
+
+See the [developer guide](docs/README-dev.md) for information re: how to build the software.
